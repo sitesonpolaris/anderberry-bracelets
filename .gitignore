@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.env
+.env*.local
+.netlify
+*.tsbuildinfo
+next-env.d.ts
+.taste-skill
+.DS_Store
