@@ -4,10 +4,12 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { makeMaterials, type StoneKey } from "./materials";
 import { beadLength, type Bead, type Strand } from "./strands";
 
 const GAP = 0.012;
+const CENTER_TILT = 0.35;
 
 type Placed = { bead: Bead; matrix: THREE.Matrix4; index: number };
 
@@ -25,9 +27,14 @@ function layout(beads: Bead[]) {
     const tangent = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
     const up = new THREE.Vector3(0, 1, 0);
     const m = new THREE.Matrix4();
+    const centerpiece = bead.kind === "hex" || bead.kind === "square" || bead.kind === "oval";
     if (bead.kind === "rondelle") m.makeBasis(radial, tangent, new THREE.Vector3().crossVectors(radial, tangent));
-    else m.makeBasis(tangent, radial, up);
-    const lift = bead.kind === "hex" || bead.kind === "square" || bead.kind === "oval" ? 0.03 : 0;
+    else if (centerpiece) {
+      // Face points outward like on the wrist, tipped up a little toward the viewer
+      const face = radial.clone().multiplyScalar(Math.cos(CENTER_TILT)).addScaledVector(up, Math.sin(CENTER_TILT)).normalize();
+      m.makeBasis(tangent, face, new THREE.Vector3().crossVectors(tangent, face));
+    } else m.makeBasis(tangent, radial, up);
+    const lift = centerpiece ? 0.03 : 0;
     m.setPosition(radial.clone().multiplyScalar(R + lift));
     placed.push({ bead, matrix: m, index });
   });
@@ -59,8 +66,16 @@ const geo = {
   })(),
   hex: new THREE.CylinderGeometry(1, 1, 0.55, 6, 1),
   oval: new THREE.CylinderGeometry(1, 1, 0.42, 56, 1),
-  square: new THREE.BoxGeometry(1.8, 0.55, 1.8),
+  // Cushion-cut signet: wide along the cord, rounded edges, face pointing out (+Y)
+  square: new RoundedBoxGeometry(2, 0.7, 1.6, 4, 0.22),
+  cube: new RoundedBoxGeometry(1.6, 1.6, 1.6, 2, 0.12),
 };
+
+/** Stable pseudo-random spin per bead so mixed stones don't look stamped out. */
+function spin(i: number): [number, number, number] {
+  const f = (n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1;
+  return [f(1) * Math.PI * 2, f(2) * Math.PI * 2, f(3) * Math.PI * 2];
+}
 
 function BeadMesh({ p, mats, born, reduced }: { p: Placed; mats: Record<StoneKey, THREE.Material>; born: number; reduced: boolean }) {
   const ref = useRef<THREE.Group>(null);
@@ -90,7 +105,7 @@ function BeadMesh({ p, mats, born, reduced }: { p: Placed; mats: Record<StoneKey
   let mesh: React.ReactNode;
   switch (bead.kind) {
     case "round":
-      mesh = <mesh geometry={geo.round} material={body} scale={s} castShadow />;
+      mesh = <mesh geometry={geo.round} material={body} scale={s} rotation={spin(p.index)} castShadow />;
       break;
     case "rondelle":
       mesh = <mesh geometry={geo.rondelle} material={body} scale={[s, s, s]} />;
@@ -102,7 +117,10 @@ function BeadMesh({ p, mats, born, reduced }: { p: Placed; mats: Record<StoneKey
       mesh = <mesh geometry={geo.oval} material={[body, cap, body]} scale={[s * 1.2, s, s * 0.85]} />;
       break;
     case "square":
-      mesh = <mesh geometry={geo.square} material={[body, body, cap, body, body, body]} scale={[s, s, s]} />;
+      mesh = <mesh geometry={geo.square} material={body} scale={[s, s, s]} />;
+      break;
+    case "cube":
+      mesh = <mesh geometry={geo.cube} material={body} scale={[s, s, s]} rotation={[0, 0.2, 0]} />;
       break;
   }
 

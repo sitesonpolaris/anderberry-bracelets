@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import BraceletHero from "@/components/bracelet/BraceletHero";
+import { TTC_SLUG } from "@/components/bracelet/strands";
 import ProductCard from "@/components/ProductCard";
 import OrgJsonLd from "@/components/OrgJsonLd";
 import VideoFacade from "@/components/VideoFacade";
@@ -25,6 +26,9 @@ export default async function Home() {
   const [products, collections] = await Promise.all([getProducts(), getCollections()]);
   const [lead, ...rest] = collections;
   const customKey = collections.find((c) => c.key === "custom")?.key;
+  // Stone prices and photos for the hero come from the ConnecQ Tap-to-Connect product
+  const ttc = products.find((p) => p.slug === TTC_SLUG);
+  const stones = (ttc?.styles ?? []).map((s) => ({ key: s.key, price_cents: s.price_cents ?? ttc?.price_cents ?? null, image: s.image }));
   const featured = products.filter((p) => p.featured).slice(0, 4);
   const pbs = site.press[0];
 
@@ -49,7 +53,7 @@ export default async function Home() {
           </div>
         </div>
         <div className="min-w-0 lg:col-span-7">
-          <BraceletHero />
+          <BraceletHero stones={stones} />
         </div>
       </section>
 
