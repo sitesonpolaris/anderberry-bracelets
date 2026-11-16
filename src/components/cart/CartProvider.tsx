@@ -43,7 +43,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [lines, loaded]);
 
   const add = useCallback<Cart["add"]>((line, qty = 1) => {
-    const id = [line.productId, line.style ?? "", line.size ?? ""].join("|");
+    const id = [line.productId, line.style ?? "", line.size ?? "", JSON.stringify(line.options ?? {}), line.personalization ?? ""].join("|");
     setLines((prev) => {
       const hit = prev.find((l) => l.id === id);
       if (hit) return prev.map((l) => (l.id === id ? { ...l, qty: Math.min(99, l.qty + qty) } : l));

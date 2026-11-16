@@ -1,6 +1,7 @@
 import type { Collection } from "./site";
 
-export type ProductStyle = { key: string; name: string; image?: string };
+export type ProductStyle = { key: string; name: string; image?: string; price_cents?: number | null };
+export type ProductOption = { label: string; values: string[] };
 
 export type Product = {
   id: string;
@@ -20,6 +21,8 @@ export type Product = {
   featured: boolean;
   sort: number;
   owner_to_confirm: string | null;
+  options: ProductOption[];
+  personalization_prompt: string | null;
 };
 
 export type CartLine = {
@@ -31,6 +34,8 @@ export type CartLine = {
   priceCents: number;
   style?: string;
   size?: string;
+  options?: Record<string, string>;
+  personalization?: string;
   qty: number;
 };
 
@@ -57,7 +62,7 @@ export type Order = {
   tax_cents: number;
   total_cents: number;
   shipping_address: { name?: string; line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string } | null;
-  items: { name: string; qty: number; price_cents: number; style?: string; size?: string; slug?: string }[];
+  items: { name: string; qty: number; price_cents: number; style?: string; size?: string; slug?: string; options?: string; personalization?: string }[];
   tracking_number: string | null;
   notes: string | null;
   created_at: string;

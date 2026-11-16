@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { priceFor } from "@/lib/pricing";
 import { seedProducts } from "@/lib/seed";
 import { site, wristSizes } from "@/lib/site";
 import { getStripe } from "@/lib/stripe";
@@ -6,7 +7,7 @@ import { hasSupabase } from "@/lib/supabase/env";
 import { supabasePublic } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
-type Item = { productId: string; qty: number; style?: string; size?: string };
+type Item = { productId: string; qty: number; style?: string; size?: string; options?: Record<string, string>; personalization?: string };
 
 export async function POST(req: Request) {
   const stripe = getStripe();
@@ -43,25 +44,35 @@ export async function POST(req: Request) {
   let subtotal = 0;
   for (const i of items) {
     const p = byId.get(i.productId);
-    if (!p || p.price_cents == null) {
+    const styleObj = (p?.styles ?? []).find((s) => s.name === i.style);
+    const unit = p ? priceFor(p, styleObj?.key) : null;
+    if (!p || unit == null) {
       return NextResponse.json({ error: "Something in your bag is no longer available. Please remove it and try again." }, { status: 409 });
     }
-    const style = p.styles.find((s) => s.name === i.style)?.name;
+    if (p.styles.length && !styleObj) return NextResponse.json({ error: `Choose a style for ${p.name}.` }, { status: 400 });
+    const style = styleObj?.name;
     const size = wristSizes.find((s) => s.value === i.size);
     if (p.needs_size && !size) return NextResponse.json({ error: `Choose a wrist size for ${p.name}.` }, { status: 400 });
-    const desc = [style, size && `Wrist ${size.label}`].filter(Boolean).join(" · ");
-    subtotal += p.price_cents * i.qty;
+    const chosen: string[] = [];
+    for (const o of p.options ?? []) {
+      const v = i.options?.[o.label];
+      if (!v || !o.values.includes(v)) return NextResponse.json({ error: `Choose a ${o.label.toLowerCase()} option for ${p.name}.` }, { status: 400 });
+      chosen.push(`${o.label}: ${v}`);
+    }
+    const note = typeof i.personalization === "string" ? i.personalization.trim().slice(0, 400) : "";
+    const desc = [style, ...chosen, size && `Wrist ${size.label}`].filter(Boolean).join(" · ");
+    subtotal += unit * i.qty;
     summary.push({ slug: p.slug, qty: i.qty, style, size: size?.value });
     lineItems.push({
       quantity: i.qty,
       price_data: {
         currency: "usd",
-        unit_amount: p.price_cents,
+        unit_amount: unit,
         product_data: {
           name: p.name,
           ...(desc && { description: desc }),
           ...(p.images[0] && { images: [new URL(p.images[0], site.url).toString()] }),
-          metadata: { product_id: p.id, slug: p.slug, style: style ?? "", size: size?.value ?? "" },
+          metadata: { product_id: p.id, slug: p.slug, style: style ?? "", size: size?.value ?? "", options: chosen.join(" · ").slice(0, 490), personalization: note.slice(0, 490) },
         },
       },
     });
@@ -70,7 +81,9 @@ export async function POST(req: Request) {
   const free = subtotal >= site.shipping.freeOverCents;
   const origin = req.headers.get("origin") || site.url;
 
-  const session = await stripe.checkout.sessions.create({
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: lineItems,
     shipping_address_collection: { allowed_countries: ["US"] },
@@ -92,6 +105,10 @@ export async function POST(req: Request) {
     success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/shop`,
   });
+  } catch (err) {
+    console.error("stripe checkout", err);
+    return NextResponse.json({ error: "We couldn’t open checkout. Please try again in a minute, or email us to order." }, { status: 502 });
+  }
 
   return NextResponse.json({ url: session.url });
 }

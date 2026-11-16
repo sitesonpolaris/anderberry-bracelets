@@ -18,10 +18,10 @@ const repeat = (n: number, pattern: Bead[]) => Array.from({ length: n }, () => p
 export const strands: Strand[] = [
   {
     key: "tiger-onyx",
-    name: "Tiger eye & matte onyx",
+    name: "Tiger eye & onyx",
     stones: "Tap-to-Connect · hex centerpiece",
     swatch: ["#b8862f", "#151515"],
-    href: "/shop/tap-to-connect-bracelet?style=tiger-onyx",
+    href: "/shop/tap-to-connect-bracelet?style=tigers-eye-onyx",
     beads: [
       { kind: "hex", stone: "tiger", cap: "coilAmber", size: 0.3 },
       ...repeat(21, [
@@ -33,10 +33,10 @@ export const strands: Strand[] = [
   },
   {
     key: "tritone-jasper",
-    name: "Tri-tone tiger eye",
+    name: "Mixed color tiger eye",
     stones: "Tap-to-Connect · jasper oval",
     swatch: ["#8c3020", "#b8862f"],
-    href: "/shop/tap-to-connect-bracelet?style=tritone-jasper",
+    href: "/shop/tap-to-connect-bracelet?style=mixed-tiger-eye",
     beads: [
       { kind: "oval", stone: "jasper", cap: "coilJasper", size: 0.34 },
       ...repeat(9, [
@@ -50,10 +50,10 @@ export const strands: Strand[] = [
   },
   {
     key: "onyx",
-    name: "Polished onyx",
-    stones: "Tap-to-Connect · onyx signet",
+    name: "Black obsidian",
+    stones: "Tap-to-Connect · signet centerpiece",
     swatch: ["#0b0b0c", "#3d3e44"],
-    href: "/shop/tap-to-connect-bracelet?style=onyx",
+    href: "/shop/tap-to-connect-bracelet?style=black-obsidian",
     beads: [
       { kind: "square", stone: "onyxPolished", cap: "coilOnyx", size: 0.3 },
       { kind: "rondelle", stone: "hematite", size: 0.15 },

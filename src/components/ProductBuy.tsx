@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { money } from "@/lib/format";
+import { priceFor } from "@/lib/pricing";
 import { wristSizes } from "@/lib/site";
 import type { Product } from "@/lib/types";
 import { useCart } from "./cart/CartProvider";
+import NoPhoto from "./NoPhoto";
 
 export default function ProductBuy({ product }: { product: Product }) {
   const [style, setStyle] = useState<string | undefined>(product.styles[0]?.key);
@@ -15,8 +17,10 @@ export default function ProductBuy({ product }: { product: Product }) {
     if (wanted && product.styles.some((s) => s.key === wanted)) setStyle(wanted);
   }, [product.styles]);
   const [size, setSize] = useState<string>("");
+  const [choices, setChoices] = useState<Record<string, string>>({});
+  const [note, setNote] = useState("");
   const [qty, setQty] = useState(1);
-  const [sizeError, setSizeError] = useState(false);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
   const { add } = useCart();
 
   const styleObj = product.styles.find((s) => s.key === style);
@@ -26,12 +30,20 @@ export default function ProductBuy({ product }: { product: Product }) {
   }, [styleObj, product.images]);
   const [active, setActive] = useState(0);
   const main = gallery[Math.min(active, gallery.length - 1)];
-  const priced = product.price_cents != null;
+  const price = priceFor(product, style);
+  const priced = price != null;
+  const optionId = (label: string) => `opt-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
   function addToBag() {
-    if (product.needs_size && !size) {
-      setSizeError(true);
-      document.getElementById("wrist-size")?.focus();
+    const missing: Record<string, boolean> = {};
+    if (product.needs_size && !size) missing.size = true;
+    product.options.forEach((o) => {
+      if (!choices[o.label]) missing[o.label] = true;
+    });
+    setErrors(missing);
+    const first = Object.keys(missing)[0];
+    if (first) {
+      document.getElementById(first === "size" ? "wrist-size" : optionId(first))?.focus();
       return;
     }
     add(
@@ -40,9 +52,11 @@ export default function ProductBuy({ product }: { product: Product }) {
         slug: product.slug,
         name: product.name,
         image: gallery[0] ?? "",
-        priceCents: product.price_cents!,
+        priceCents: price!,
         style: styleObj?.name,
         size: product.needs_size ? size : undefined,
+        options: product.options.length ? choices : undefined,
+        personalization: note.trim() || undefined,
       },
       qty,
     );
@@ -53,8 +67,17 @@ export default function ProductBuy({ product }: { product: Product }) {
       {/* Gallery */}
       <div className="lg:col-span-7">
         <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-bone-2">
-          {main && <Image key={main} src={main} alt={`${product.name}${styleObj ? `, ${styleObj.name}` : ""}`} fill priority sizes="(min-width: 1024px) 58vw, 100vw" className="object-cover" />}
+          {main ? (
+            <Image key={main} src={main} alt={`${product.name}${styleObj ? `, ${styleObj.name}` : ""}`} fill priority sizes="(min-width: 1024px) 58vw, 100vw" className="object-cover" />
+          ) : (
+            <NoPhoto name={product.name} />
+          )}
         </div>
+        {styleObj && !styleObj.image && main && (
+          <p className="mt-3 text-[0.95rem] text-hematite" aria-live="polite">
+            Shown in {product.styles.find((s) => s.image === gallery[active] || s.image === main)?.name ?? "another stone"}. A {styleObj.name.toLowerCase()} photo is coming soon.
+          </p>
+        )}
         {gallery.length > 1 && (
           <div className="scrollbar-none mt-4 flex gap-3 overflow-x-auto">
             {gallery.map((src, i) => (
@@ -77,17 +100,22 @@ export default function ProductBuy({ product }: { product: Product }) {
       <div className="lg:col-span-5">
         <div className="lg:sticky lg:top-24">
           <h1 className="text-[clamp(2.5rem,4.4vw,4rem)]">{product.name}</h1>
-          <p className={`tabular mt-4 text-[1.6rem] ${priced ? "" : "text-hematite"}`}>{money(product.price_cents)}</p>
+          <p className={`tabular mt-4 text-[1.6rem] ${priced ? "" : "text-hematite"}`} aria-live="polite">
+            {money(price)}
+          </p>
           <p className="mt-5 text-[1.1rem] leading-relaxed">{product.description}</p>
 
           {product.styles.length > 0 && (
             <fieldset className="mt-8">
               <legend className="mb-3 font-semibold">
-                Style: <span className="font-normal">{styleObj?.name}</span>
+                {product.is_nfc && product.collection === "tap-to-connect" ? "Stone" : "Style"}: <span className="font-normal">{styleObj?.name}</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {product.styles.map((s) => (
-                  <label key={s.key} className={`cursor-pointer rounded-full px-4 py-2.5 text-[0.95rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${s.key === style ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-bone-3"}`}>
+                  <label
+                    key={s.key}
+                    className={`cursor-pointer rounded-full px-4 py-2.5 text-[0.95rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${s.key === style ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-bone-3"}`}
+                  >
                     <input
                       type="radio"
                       name="style"
@@ -100,11 +128,40 @@ export default function ProductBuy({ product }: { product: Product }) {
                       className="sr-only"
                     />
                     {s.name}
+                    {s.price_cents != null && s.price_cents !== product.price_cents && (
+                      <span className={`tabular ml-1.5 ${s.key === style ? "text-ash" : "text-hematite"}`}>{money(s.price_cents)}</span>
+                    )}
                   </label>
                 ))}
               </div>
             </fieldset>
           )}
+
+          {product.options.map((o) => (
+            <div key={o.label} className="mt-7">
+              <label htmlFor={optionId(o.label)} className="mb-3 block font-semibold">
+                {o.label}
+              </label>
+              <select
+                id={optionId(o.label)}
+                value={choices[o.label] ?? ""}
+                onChange={(e) => {
+                  setChoices((c) => ({ ...c, [o.label]: e.target.value }));
+                  setErrors((er) => ({ ...er, [o.label]: false }));
+                }}
+                aria-invalid={Boolean(errors[o.label])}
+                className="field max-w-xs"
+              >
+                <option value="">Choose one</option>
+                {o.values.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              {errors[o.label] && <p className="mt-2 text-sm font-semibold text-oxblood">Choose a {o.label.toLowerCase()} option.</p>}
+            </div>
+          ))}
 
           {product.needs_size && (
             <div className="mt-7">
@@ -116,9 +173,9 @@ export default function ProductBuy({ product }: { product: Product }) {
                 value={size}
                 onChange={(e) => {
                   setSize(e.target.value);
-                  setSizeError(false);
+                  setErrors((er) => ({ ...er, size: false }));
                 }}
-                aria-invalid={sizeError}
+                aria-invalid={Boolean(errors.size)}
                 aria-describedby="size-help"
                 className="field max-w-xs"
               >
@@ -129,9 +186,29 @@ export default function ProductBuy({ product }: { product: Product }) {
                   </option>
                 ))}
               </select>
-              <p id="size-help" className={`mt-2 text-sm ${sizeError ? "font-semibold text-oxblood" : "text-hematite"}`}>
-                {sizeError ? "Choose a wrist size so we can string it to fit." : "Measure snugly around your wrist bone. We add the ease."}
+              <p id="size-help" className={`mt-2 text-sm ${errors.size ? "font-semibold text-oxblood" : "text-hematite"}`}>
+                {errors.size ? "Choose a wrist size so we can string it to fit." : "Measure snugly around your wrist bone. We add the ease."}
               </p>
+            </div>
+          )}
+
+          {product.personalization_prompt && priced && (
+            <div className="mt-7">
+              <label htmlFor="personalization" className="mb-2 block font-semibold">
+                Personalization <span className="font-normal text-hematite">(optional)</span>
+              </label>
+              <p id="personalization-help" className="mb-3 text-sm text-hematite">
+                {product.personalization_prompt}
+              </p>
+              <textarea
+                id="personalization"
+                rows={3}
+                maxLength={400}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                aria-describedby="personalization-help"
+                className="field"
+              />
             </div>
           )}
 

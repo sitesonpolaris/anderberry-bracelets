@@ -53,7 +53,7 @@ export const collections: { key: Collection; name: string; blurb: string }[] = [
   { key: "tap-to-connect", name: "Tap-to-Connect", blurb: "Stone bracelets with an NFC chip set in the centerpiece. One tap shares your link." },
   { key: "gemstone", name: "Gemstone", blurb: "Onyx, tiger eye, hematite and agate, strung by hand for everyday wear." },
   { key: "custom", name: "Custom logo", blurb: "Your organization’s logo sealed into a charm on bracelets, keychains and pins." },
-  { key: "pins", name: "Pins", blurb: "Beaded hat pins and logo lapel pins, NFC optional." },
+  { key: "pins", name: "Pins & cigar pokers", blurb: "Logo lapel pins, NFC optional, and beaded cigar nub holders." },
 ];
 
 export const wristSizes = [

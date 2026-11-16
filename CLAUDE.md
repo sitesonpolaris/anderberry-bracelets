@@ -29,9 +29,15 @@
 - Still needed (secret): `SUPABASE_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`; optional `STRIPE_AUTOMATIC_TAX=true`.
 - Stripe webhook endpoint: `https://<domain>/api/stripe/webhook`, events `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`.
 
+## Catalogue (14 products, Nov 2026)
+- Tap-to-Connect: 8 stones with their own prices from Jesse's Etsy screenshots (tiger eye & onyx, mixed tiger eye, blue & gold, brown tiger eye $85; black obsidian, black lava rock $80; leopard, snowflake jasper $75). Stone = `styles[].price_cents`.
+- Custom products carry `options` (Customization: Logo, Photo, Fraternity, Sorority, QR Code, Pic of Pet, Solid Color, N/A) and an optional personalization note; both travel into the cart, Stripe line description/metadata and the order.
+- Added from Etsy: Executive 3-Piece ($249.97), Executive 2-Piece ($169.98), NFC Keychain ($79.99), Heart NFC Charm ($39.99), Stylish Cigar Nub Holder ($39.99, was "Beaded Hat Pin"), Skull Head Cigar Nub Holder ($34.99), Eclipse Collection (hidden: no photo/price). Old slugs redirect.
+
 ## Owner to confirm
-- Prices: Tap-to-Connect ($65 vs $75 seen on Etsy), Custom Logo Tap-to-Connect ($99.99), Purple & Gold ($65 vs $39.99; name, and whether Greek letters may be used). Every other product has no price yet.
-- Names for the Onyx Signet and Tiger Eye Hex bracelets; whether hat pins are still made; Lava Rock collection and cigar nub holders (no photos, not listed).
+- Prices taken from Etsy search snippets (not screenshots): Executive 3-Piece, 2-Piece, Keychain, Heart Charm, both cigar holders, Purple & Gold ($65 vs $39.99; also name and Greek-letter use). Onyx Signet, Tiger Eye Hex, Logo Charm, Lapel Pin still have no price.
+- Photos needed: Tap-to-Connect in blue & gold, brown tiger eye, lava rock, leopard and snowflake jasper (page says "photo coming soon"); Heart Charm; Skull Head holder; Keychain on its own; a real 2-piece set; Eclipse Collection (plus its stones, description, price).
+- Is the polished black Tap-to-Connect in the worn photo black obsidian? Are the beaded stick-pin photos the Stylish Cigar Nub Holder?
 - Permission to show client logos in photos: LegalShield, TCB 54 Hundred Bar & Grill, R&B Versus Live, MS Novelty Experience, "PK".
 - Shipping ($6 flat, free over $75), processing time, 14-day return / restring policy, and the privacy/terms pages are drafts.
 - Milestone dates on the home page: Etsy 2017 (from Etsy search snippet), HUG grant "age 12", PBS "ten years in". "Amy works on AnderBerry full-time" comes from a PBS summary.

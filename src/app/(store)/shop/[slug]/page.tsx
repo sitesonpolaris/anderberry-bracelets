@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import ProductBuy from "@/components/ProductBuy";
 import ProductCard from "@/components/ProductCard";
 import { getProduct, getProducts } from "@/lib/products";
+import { priceRange } from "@/lib/pricing";
 import { collections, site } from "@/lib/site";
 
 export const revalidate = 300;
@@ -32,6 +33,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const related = (await getProducts(product.collection)).filter((p) => p.slug !== product.slug).slice(0, 4);
   const collection = collections.find((c) => c.key === product.collection);
 
+  const range = priceRange(product);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -39,14 +41,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     description: product.description,
     image: product.images.map((i) => new URL(i, site.url).toString()),
     brand: { "@type": "Brand", name: site.name },
-    ...(product.price_cents != null && {
-      offers: {
-        "@type": "Offer",
-        price: (product.price_cents / 100).toFixed(2),
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-        url: `${site.url}/shop/${product.slug}`,
-      },
+    ...(range.min != null && {
+      offers:
+        range.min === range.max
+          ? { "@type": "Offer", price: (range.min / 100).toFixed(2), priceCurrency: "USD", availability: "https://schema.org/InStock", url: `${site.url}/shop/${product.slug}` }
+          : { "@type": "AggregateOffer", lowPrice: (range.min / 100).toFixed(2), highPrice: (range.max! / 100).toFixed(2), priceCurrency: "USD", offerCount: product.styles.length },
     }),
   };
 

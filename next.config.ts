@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }],
   },
+  async redirects() {
+    return [
+      { source: "/shop/logo-gift-set", destination: "/shop/executive-3-piece-set", permanent: true },
+      { source: "/shop/beaded-hat-pin", destination: "/shop/stylish-cigar-nub-holder", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

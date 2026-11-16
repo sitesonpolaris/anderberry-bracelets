@@ -31,7 +31,8 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
               <li key={k} className="flex justify-between gap-4 py-3">
                 <div>
                   <p className="font-medium">{i.qty} × {i.name}</p>
-                  <p className="text-hematite">{[i.style, i.size && `Wrist ${sizeLabel(i.size) ?? i.size}`].filter(Boolean).join(" · ") || "No options"}</p>
+                  <p className="text-hematite">{[i.style, i.options, i.size && `Wrist ${sizeLabel(i.size) ?? i.size}`].filter(Boolean).join(" · ") || "No options"}</p>
+                  {i.personalization && <p className="mt-1 rounded-lg bg-[#f7f4ee] px-3 py-2">“{i.personalization}”</p>}
                 </div>
                 <span className="tabular">{moneyExact(i.price_cents * i.qty)}</span>
               </li>

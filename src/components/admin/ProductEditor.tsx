@@ -29,6 +29,8 @@ const blank: Omit<Product, "id"> = {
   featured: false,
   sort: 100,
   owner_to_confirm: null,
+  options: [],
+  personalization_prompt: null,
 };
 
 export default function ProductEditor({ product }: { product: Product | null }) {
@@ -36,6 +38,8 @@ export default function ProductEditor({ product }: { product: Product | null }) 
   const [p, setP] = useState<Omit<Product, "id">>(product ?? blank);
   const [price, setPrice] = useState(product?.price_cents != null ? (product.price_cents / 100).toFixed(2) : "");
   const [stones, setStones] = useState((product?.stones ?? []).join(", "));
+  const [stylePrices, setStylePrices] = useState<string[]>((product?.styles ?? []).map((s) => (s.price_cents != null ? (s.price_cents / 100).toFixed(2) : "")));
+  const [optionValues, setOptionValues] = useState<string[]>((product?.options ?? []).map((o) => o.values.join(", ")));
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -81,6 +85,12 @@ export default function ProductEditor({ product }: { product: Product | null }) 
       setMsg({ ok: false, text: "Price must be a number, or empty for “Ask for price”." });
       return;
     }
+    const toCents = (v: string) => (v.trim() === "" ? null : Math.round(Number(v.replace(/[$,]/g, "")) * 100));
+    const badStyle = stylePrices.some((v) => { const c = toCents(v); return c !== null && (!Number.isFinite(c) || c < 0); });
+    if (badStyle) {
+      setMsg({ ok: false, text: "Style prices must be numbers, or empty to use the main price." });
+      return;
+    }
     const slug = slugify(p.slug || p.name);
     if (!p.name.trim() || !slug) {
       setMsg({ ok: false, text: "Add a name first." });
@@ -92,8 +102,13 @@ export default function ProductEditor({ product }: { product: Product | null }) 
       price_cents: cents,
       stones: stones.split(",").map((s) => s.trim()).filter(Boolean),
       styles: p.styles
+        .map((s, i) => ({ ...s, price_cents: toCents(stylePrices[i] ?? "") }))
         .filter((s) => s.name.trim())
-        .map((s) => ({ ...s, key: s.key || slugify(s.name), image: s.image || undefined })),
+        .map((s) => ({ ...s, key: s.key || slugify(s.name), image: s.image || undefined, price_cents: s.price_cents ?? undefined })),
+      options: p.options
+        .map((o, i) => ({ label: o.label.trim(), values: (optionValues[i] ?? "").split(",").map((v) => v.trim()).filter(Boolean) }))
+        .filter((o) => o.label && o.values.length),
+      personalization_prompt: p.personalization_prompt?.trim() || null,
     };
     setBusy(true);
     const sb = supabaseBrowser();
@@ -180,18 +195,42 @@ export default function ProductEditor({ product }: { product: Product | null }) 
           <p className="mb-4 text-hematite">Optional. Each style can show its own photo.</p>
           <div className="grid gap-3">
             {p.styles.map((s, i) => (
-              <div key={i} className="grid gap-2 rounded-xl bg-[#f7f4ee] p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+              <div key={i} className="grid gap-2 rounded-xl bg-[#f7f4ee] p-3 sm:grid-cols-[1fr_8rem_1fr_auto] sm:items-center">
                 <label className="sr-only" htmlFor={`sn${i}`}>Style name</label>
                 <input id={`sn${i}`} value={s.name} onChange={(e) => setStyle(i, { name: e.target.value })} placeholder="Style name" className="field" />
+                <label className="sr-only" htmlFor={`sp${i}`}>Price for this style</label>
+                <input id={`sp${i}`} inputMode="decimal" value={stylePrices[i] ?? ""} onChange={(e) => setStylePrices((x) => { const n = [...x]; n[i] = e.target.value; return n; })} placeholder="Price" className="field tabular" />
                 <label className="sr-only" htmlFor={`si${i}`}>Photo for this style</label>
                 <select id={`si${i}`} value={s.image ?? ""} onChange={(e) => setStyle(i, { image: e.target.value || undefined })} className="field">
                   <option value="">No photo</option>
                   {p.images.map((img, k) => <option key={img} value={img}>Photo {k + 1}</option>)}
                 </select>
-                <button type="button" onClick={() => set("styles", p.styles.filter((_, k) => k !== i))} className="rounded-lg px-3 py-2 text-oxblood hover:bg-white">Remove</button>
+                <button type="button" onClick={() => { set("styles", p.styles.filter((_, k) => k !== i)); setStylePrices((x) => x.filter((_, k) => k !== i)); }} className="rounded-lg px-3 py-2 text-oxblood hover:bg-white">Remove</button>
               </div>
             ))}
-            <button type="button" onClick={() => set("styles", [...p.styles, { key: "", name: "" }])} className="btn btn-quiet !min-h-11 justify-self-start">Add a style</button>
+            <p className="text-sm text-hematite">Leave a style’s price empty to use the main price.</p>
+            <button type="button" onClick={() => { set("styles", [...p.styles, { key: "", name: "" }]); setStylePrices((x) => [...x, ""]); }} className="btn btn-quiet !min-h-11 justify-self-start">Add a style</button>
+          </div>
+        </Panel>
+
+        <Panel title="Required choices">
+          <p className="mb-4 text-hematite">Extra drop-downs shoppers must answer, like Customization: Logo, Photo, Fraternity.</p>
+          <div className="grid gap-3">
+            {p.options.map((o, i) => (
+              <div key={i} className="grid gap-2 rounded-xl bg-[#f7f4ee] p-3 sm:grid-cols-[12rem_1fr_auto] sm:items-center">
+                <label className="sr-only" htmlFor={`ol${i}`}>Choice name</label>
+                <input id={`ol${i}`} value={o.label} onChange={(e) => set("options", p.options.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} placeholder="Customization" className="field" />
+                <label className="sr-only" htmlFor={`ov${i}`}>Options, separated by commas</label>
+                <input id={`ov${i}`} value={optionValues[i] ?? ""} onChange={(e) => setOptionValues((x) => { const n = [...x]; n[i] = e.target.value; return n; })} placeholder="Logo, Photo, Fraternity" className="field" />
+                <button type="button" onClick={() => { set("options", p.options.filter((_, k) => k !== i)); setOptionValues((x) => x.filter((_, k) => k !== i)); }} className="rounded-lg px-3 py-2 text-oxblood hover:bg-white">Remove</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => { set("options", [...p.options, { label: "", values: [] }]); setOptionValues((x) => [...x, ""]); }} className="btn btn-quiet !min-h-11 justify-self-start">Add a choice</button>
+          </div>
+          <div className="mt-6">
+            <label htmlFor="pz" className="mb-1.5 block font-semibold">Personalization note</label>
+            <textarea id="pz" rows={2} value={p.personalization_prompt ?? ""} onChange={(e) => set("personalization_prompt", e.target.value)} placeholder="Leave empty to hide the note box" className="field" />
+            <p className="mt-1 text-sm text-hematite">Shown above an optional text box on the product page.</p>
           </div>
         </Panel>
       </div>

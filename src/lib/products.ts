@@ -7,7 +7,7 @@ import { supabasePublic } from "./supabase/server";
 
 function normalize(row: Record<string, unknown>): Product {
   const r = row as unknown as Product;
-  return { ...r, images: r.images ?? [], styles: (r.styles as Product["styles"]) ?? [], stones: r.stones ?? [] };
+  return { ...r, images: r.images ?? [], styles: (r.styles as Product["styles"]) ?? [], stones: r.stones ?? [], options: (r.options as Product["options"]) ?? [] };
 }
 
 export async function getProducts(collection?: Collection): Promise<Product[]> {

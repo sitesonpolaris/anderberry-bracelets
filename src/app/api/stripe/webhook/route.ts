@@ -57,6 +57,8 @@ export async function POST(req: Request) {
         slug: prod?.metadata?.slug,
         style: prod?.metadata?.style || undefined,
         size: prod?.metadata?.size || undefined,
+        options: prod?.metadata?.options || undefined,
+        personalization: prod?.metadata?.personalization || undefined,
       };
     });
 

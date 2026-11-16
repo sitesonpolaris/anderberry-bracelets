@@ -52,7 +52,7 @@ export default function CartDrawer() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: lines.map((l) => ({ productId: l.productId, qty: l.qty, style: l.style, size: l.size })) }),
+        body: JSON.stringify({ items: lines.map((l) => ({ productId: l.productId, qty: l.qty, style: l.style, size: l.size, options: l.options, personalization: l.personalization })) }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Checkout is unavailable right now.");
@@ -119,8 +119,9 @@ export default function CartDrawer() {
                       <span className="tabular font-medium">{money(l.priceCents * l.qty)}</span>
                     </div>
                     <p className="text-sm text-hematite">
-                      {[l.style, sizeLabel(l.size) && `Wrist ${sizeLabel(l.size)}`].filter(Boolean).join(" · ")}
+                      {[l.style, ...Object.entries(l.options ?? {}).map(([k, v]) => `${k}: ${v}`), sizeLabel(l.size) && `Wrist ${sizeLabel(l.size)}`].filter(Boolean).join(" · ")}
                     </p>
+                    {l.personalization && <p className="line-clamp-2 text-sm text-hematite">“{l.personalization}”</p>}
                     <div className="mt-auto flex items-center gap-3 pt-2">
                       <div className="flex items-center rounded-full bg-bone-2">
                         <button type="button" aria-label={`One fewer ${l.name}`} onClick={() => setQty(l.id, l.qty - 1)} className="h-11 w-11 rounded-full text-lg active:scale-90" tabIndex={open ? 0 : -1}>
