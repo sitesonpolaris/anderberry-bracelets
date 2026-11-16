@@ -11,6 +11,10 @@
   --color-oxblood: #5e1b19;       /* red tiger eye: one full field */
   --color-hematite: #56565a;      /* hematite: secondary text on bone */
   --color-ash: #a9a39a;           /* secondary text on onyx */
+  --color-bone-3: #ddd5c6;        /* hover step on light */
+  --color-rose: #efdcd8;          /* body text on oxblood */
+  --color-rose-2: #e5c9c3;        /* captions on oxblood */
+  --color-oxblood-line: #7d2c28;  /* strand cord on oxblood */
 
   --font-display: var(--font-gloock), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;

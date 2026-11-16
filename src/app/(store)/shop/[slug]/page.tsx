@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 import ProductBuy from "@/components/ProductBuy";
 import ProductCard from "@/components/ProductCard";
 import { getProduct, getProducts } from "@/lib/products";
@@ -62,9 +61,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           </>
         )}
       </nav>
-      <Suspense>
-        <ProductBuy product={product} />
-      </Suspense>
+      <ProductBuy product={product} />
 
       {related.length > 0 && (
         <section aria-labelledby="related-h" className="mt-32">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
@@ -118,6 +118,8 @@ function Strung({ strand, mats, reduced, yaw }: { strand: Strand; mats: Record<S
   const { placed, R } = useMemo(() => layout(strand.beads), [strand]);
   const [born, setBorn] = useState(0);
   const clockRef = useRef(0);
+  const aspect = useThree((st) => st.size.width / st.size.height);
+  const fit = Math.min(1, aspect / 1.3); // narrower stages (phones) get a smaller bracelet
 
   useFrame(({ clock }, dt) => {
     clockRef.current = clock.elapsedTime;
@@ -138,7 +140,7 @@ function Strung({ strand, mats, reduced, yaw }: { strand: Strand; mats: Record<S
   }, [strand]);
 
   return (
-    <group ref={group} scale={1.28 / R}>
+    <group ref={group} scale={(1.28 * fit) / R}>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[R, 0.018, 8, 160]} />
         <meshStandardMaterial color="#111" roughness={0.8} />

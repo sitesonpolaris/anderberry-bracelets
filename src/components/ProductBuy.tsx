@@ -2,17 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { money } from "@/lib/format";
 import { wristSizes } from "@/lib/site";
 import type { Product } from "@/lib/types";
 import { useCart } from "./cart/CartProvider";
 
 export default function ProductBuy({ product }: { product: Product }) {
-  const params = useSearchParams();
-  const initialStyle = product.styles.find((s) => s.key === params.get("style"))?.key ?? product.styles[0]?.key;
-  const [style, setStyle] = useState<string | undefined>(initialStyle);
+  const [style, setStyle] = useState<string | undefined>(product.styles[0]?.key);
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("style");
+    if (wanted && product.styles.some((s) => s.key === wanted)) setStyle(wanted);
+  }, [product.styles]);
   const [size, setSize] = useState<string>("");
   const [qty, setQty] = useState(1);
   const [sizeError, setSizeError] = useState(false);
@@ -86,7 +87,7 @@ export default function ProductBuy({ product }: { product: Product }) {
               </legend>
               <div className="flex flex-wrap gap-2">
                 {product.styles.map((s) => (
-                  <label key={s.key} className={`cursor-pointer rounded-full px-4 py-2.5 text-[0.95rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${s.key === style ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-[#ddd5c6]"}`}>
+                  <label key={s.key} className={`cursor-pointer rounded-full px-4 py-2.5 text-[0.95rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold ${s.key === style ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-bone-3"}`}>
                     <input
                       type="radio"
                       name="style"

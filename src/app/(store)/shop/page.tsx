@@ -34,7 +34,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
               key={t.name}
               href={t.key ? `/shop?c=${t.key}` : "/shop"}
               aria-current={on ? "page" : undefined}
-              className={`shrink-0 rounded-full px-5 py-3 text-[0.98rem] font-medium transition-colors ${on ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-[#ddd5c6]"}`}
+              className={`shrink-0 rounded-full px-5 py-3 text-[0.98rem] font-medium transition-colors ${on ? "bg-onyx text-bone" : "bg-bone-2 hover:bg-bone-3"}`}
             >
               {t.name}
             </Link>

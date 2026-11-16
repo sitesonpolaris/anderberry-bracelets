@@ -76,7 +76,7 @@ export default function BraceletHero() {
               aria-checked={i === index}
               onClick={() => setIndex(i)}
               className={`group flex shrink-0 items-center gap-3 rounded-full py-2 pl-2 pr-4 text-left transition-colors duration-200 ${
-                i === index ? "bg-onyx text-bone" : "bg-bone-2 text-onyx hover:bg-[#ddd5c6]"
+                i === index ? "bg-onyx text-bone" : "bg-bone-2 text-onyx hover:bg-bone-3"
               }`}
             >
               <span aria-hidden className="relative block h-9 w-9 overflow-hidden rounded-full transition-transform duration-200 group-active:scale-90">

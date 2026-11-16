@@ -35,9 +35,9 @@ export default function StoryPage() {
           <div className="space-y-8 lg:col-span-6 lg:col-start-7">
             <blockquote>
               <p className="font-display text-[clamp(1.5rem,2.3vw,2.1rem)] leading-snug">“{site.quotes.start}”</p>
-              <footer className="mt-4 text-[#e5c9c3]">Aaron Anderson</footer>
+              <footer className="mt-4 text-rose-2">Aaron Anderson</footer>
             </blockquote>
-            <p className="text-[1.15rem] leading-relaxed text-[#efdcd8]">
+            <p className="text-[1.15rem] leading-relaxed text-rose">
               Aaron sold at breweries, sports bars, parks, sidewalks and festivals around Charlotte, handing every customer a business
               card. The bracelets brought in enough for Amy to make AnderBerry her full-time work and support the family.
             </p>

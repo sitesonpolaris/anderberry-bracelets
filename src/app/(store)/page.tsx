@@ -74,7 +74,7 @@ export default async function Home() {
             <Link
               key={c.key}
               href={`/shop?c=${c.key}`}
-              className="group grid grid-cols-[7.5rem_1fr] items-center gap-5 rounded-[2rem] bg-bone-2 p-3 pr-6 transition-colors hover:bg-[#ddd5c6] sm:grid-cols-[10rem_1fr] lg:col-span-5"
+              className="group grid grid-cols-[7.5rem_1fr] items-center gap-5 rounded-[2rem] bg-bone-2 p-3 pr-6 transition-colors hover:bg-bone-3 sm:grid-cols-[10rem_1fr] lg:col-span-5"
               data-reveal
               style={{ ["--i" as string]: i + 1 }}
             >
@@ -153,24 +153,26 @@ export default async function Home() {
               </h2>
               <blockquote className="mt-10 max-w-xl" data-reveal style={{ ["--i" as string]: 1 }}>
                 <p className="font-display text-[clamp(1.5rem,2.3vw,2.1rem)] leading-snug">“{site.quotes.start}”</p>
-                <footer className="mt-4 text-[#e5c9c3]">Aaron Anderson, co-founder</footer>
+                <footer className="mt-4 text-rose-2">Aaron Anderson, co-founder</footer>
               </blockquote>
               <Link href="/story" className="btn btn-bone mt-10" data-reveal style={{ ["--i" as string]: 2 }}>
                 Read the whole story
               </Link>
             </div>
-            <ol className="relative lg:col-span-5 lg:col-start-8" aria-label="AnderBerry milestones">
-              <span aria-hidden className="absolute bottom-3 left-[0.6875rem] top-3 w-[3px] rounded-full bg-[#7d2c28]" />
+            <div className="relative lg:col-span-5 lg:col-start-8">
+            <span aria-hidden className="absolute bottom-3 left-[0.6875rem] top-3 w-[3px] rounded-full bg-oxblood-line" />
+            <ol className="relative" aria-label="AnderBerry milestones">
               {milestones.map((m, i) => (
                 <li key={m.what} className="relative grid grid-cols-[2.5rem_1fr] gap-4 pb-8 last:pb-0" data-reveal style={{ ["--i" as string]: i }}>
                   <span aria-hidden className={`relative mt-1 h-6 w-6 rounded-full ${i === milestones.length - 1 ? "bg-gold" : "bg-bone"}`} />
                   <div>
                     <h3 className="font-sans text-[1.05rem] font-semibold tracking-normal">{m.when}</h3>
-                    <p className="text-[#efdcd8]">{m.what}</p>
+                    <p className="text-rose">{m.what}</p>
                   </div>
                 </li>
               ))}
             </ol>
+            </div>
           </div>
         </div>
       </section>
