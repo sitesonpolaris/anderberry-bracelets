@@ -1,14 +1,17 @@
 "use client";
-import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-/** Staggered entrances: every [data-reveal] rises in once as it enters. Content stays visible without JS. */
+/**
+ * Staggered entrances: every [data-reveal] rises in once as it enters the viewport.
+ * Watches the DOM for new elements, so content swapped in by client navigation
+ * (e.g. /shop?c=… category changes, which keep the same pathname) is revealed too.
+ * Content stays visible without JS, and with reduced motion.
+ */
 export default function SiteMotion() {
-  const path = usePathname();
   useEffect(() => {
     document.documentElement.classList.add("js");
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-in)"));
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -20,12 +23,27 @@ export default function SiteMotion() {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
     );
-    els.forEach((el) => {
-      const r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight) el.classList.add("is-in");
+
+    const track = (el: Element) => {
+      if (el.classList.contains("is-in")) return;
+      if (reduced || el.getBoundingClientRect().top < window.innerHeight) el.classList.add("is-in");
       else io.observe(el);
+    };
+    const scan = (root: ParentNode) => {
+      if (root instanceof Element && root.matches("[data-reveal]")) track(root);
+      root.querySelectorAll("[data-reveal]").forEach(track);
+    };
+
+    scan(document);
+    const mo = new MutationObserver((records) => {
+      for (const r of records) r.addedNodes.forEach((n) => n instanceof Element && scan(n));
     });
-    return () => io.disconnect();
-  }, [path]);
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      mo.disconnect();
+      io.disconnect();
+    };
+  }, []);
   return null;
 }
