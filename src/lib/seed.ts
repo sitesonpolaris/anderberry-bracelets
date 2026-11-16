@@ -22,7 +22,7 @@ const customization = {
   values: ["Logo", "Photo", "Fraternity", "Sorority", "QR Code", "Pic of Pet", "Solid Color", "N/A"],
 };
 const customNote =
-  "Tell us the stones or colors you want and the link for your NFC chip. Email your logo or photo to Anderberrybracelets@gmail.com after you order.";
+  "Tell us the stones or colors you want and the link for your NFC chip. Add your images above, or email them to Anderberrybracelets@gmail.com.";
 
 export const seedProducts: Product[] = [
   p({

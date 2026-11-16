@@ -18,6 +18,14 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   const a = o.shipping_address;
   const sizeLabel = (v?: string) => wristSizes.find((s) => s.value === v)?.label;
 
+  // Customer images live in a private bucket; sign short-lived links for the admin
+  const paths = o.items.flatMap((i) => i.uploads ?? []);
+  const signed = new Map<string, string>();
+  if (paths.length) {
+    const { data: links } = await sb.storage.from("customer-uploads").createSignedUrls(paths, 3600);
+    links?.forEach((l) => l.path && l.signedUrl && signed.set(l.path, l.signedUrl));
+  }
+
   return (
     <>
       <p className="mb-3"><Link href="/admin/orders" className="text-hematite underline-offset-4 hover:underline">All orders</Link></p>
@@ -33,6 +41,26 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                   <p className="font-medium">{i.qty} × {i.name}</p>
                   <p className="text-hematite">{[i.style, i.options, i.size && `Wrist ${sizeLabel(i.size) ?? i.size}`].filter(Boolean).join(" · ") || "No options"}</p>
                   {i.personalization && <p className="mt-1 rounded-lg bg-[#f7f4ee] px-3 py-2">“{i.personalization}”</p>}
+                  {i.uploads?.length ? (
+                    <ul className="mt-2 flex flex-wrap gap-2" aria-label="Customer images">
+                      {i.uploads.map((path, k) => {
+                        const url = signed.get(path);
+                        const name = path.split("/").pop()?.replace(/^\d+-/, "") ?? "image";
+                        return (
+                          <li key={path}>
+                            {url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="group block" title={`Open ${name}`}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={url} alt={`Customer image ${k + 1}: ${name}`} className="h-20 w-20 rounded-lg bg-[#f7f4ee] object-cover transition-opacity group-hover:opacity-80" />
+                              </a>
+                            ) : (
+                              <span className="grid h-20 w-20 place-items-center rounded-lg bg-[#f7f4ee] px-1 text-center text-xs text-hematite">Missing</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
                 </div>
                 <span className="tabular">{moneyExact(i.price_cents * i.qty)}</span>
               </li>

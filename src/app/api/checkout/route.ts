@@ -7,7 +7,10 @@ import { hasSupabase } from "@/lib/supabase/env";
 import { supabasePublic } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
-type Item = { productId: string; qty: number; style?: string; size?: string; options?: Record<string, string>; personalization?: string };
+// Matches what CustomUploads writes and the storage policy allows: pending/<uuid>/<file>
+const UPLOAD_PATH = /^pending\/[0-9a-f-]{36}\/[A-Za-z0-9.-]{1,100}$/;
+
+type Item = { productId: string; qty: number; style?: string; size?: string; options?: Record<string, string>; personalization?: string; uploads?: string[] };
 
 export async function POST(req: Request) {
   const stripe = getStripe();
@@ -60,6 +63,10 @@ export async function POST(req: Request) {
       chosen.push(`${o.label}: ${v}`);
     }
     const note = typeof i.personalization === "string" ? i.personalization.trim().slice(0, 400) : "";
+    const uploads = Array.isArray(i.uploads) ? i.uploads : [];
+    if (uploads.length > 3 || (uploads.length && !(p.options ?? []).length) || !uploads.every((u) => typeof u === "string" && UPLOAD_PATH.test(u))) {
+      return NextResponse.json({ error: `Those images couldn’t be attached to ${p.name}. Please remove them and add them again.` }, { status: 400 });
+    }
     const desc = [style, ...chosen, size && `Wrist ${size.label}`].filter(Boolean).join(" · ");
     subtotal += unit * i.qty;
     summary.push({ slug: p.slug, qty: i.qty, style, size: size?.value });
@@ -72,7 +79,7 @@ export async function POST(req: Request) {
           name: p.name,
           ...(desc && { description: desc }),
           ...(p.images[0] && { images: [new URL(p.images[0], site.url).toString()] }),
-          metadata: { product_id: p.id, slug: p.slug, style: style ?? "", size: size?.value ?? "", options: chosen.join(" · ").slice(0, 490), personalization: note.slice(0, 490) },
+          metadata: { product_id: p.id, slug: p.slug, style: style ?? "", size: size?.value ?? "", options: chosen.join(" · ").slice(0, 490), personalization: note.slice(0, 490), uploads: uploads.join("|") },
         },
       },
     });

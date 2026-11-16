@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { money } from "@/lib/format";
 import { priceFor } from "@/lib/pricing";
 import { wristSizes } from "@/lib/site";
-import type { Product } from "@/lib/types";
+import type { Product, Upload } from "@/lib/types";
 import { useCart } from "./cart/CartProvider";
+import CustomUploads from "./CustomUploads";
 import NoPhoto from "./NoPhoto";
 
 export default function ProductBuy({ product }: { product: Product }) {
@@ -19,6 +20,11 @@ export default function ProductBuy({ product }: { product: Product }) {
   const [size, setSize] = useState<string>("");
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
+  const [uploads, setUploads] = useState<Upload[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const onUploads = useCallback((u: Upload[]) => setUploads(u), []);
+  const onUploadBusy = useCallback((b: boolean) => setUploading(b), []);
+  const takesUploads = product.options.length > 0;
   const [qty, setQty] = useState(1);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const { add } = useCart();
@@ -57,6 +63,7 @@ export default function ProductBuy({ product }: { product: Product }) {
         size: product.needs_size ? size : undefined,
         options: product.options.length ? choices : undefined,
         personalization: note.trim() || undefined,
+        uploads: takesUploads && uploads.length ? uploads : undefined,
       },
       qty,
     );
@@ -192,6 +199,8 @@ export default function ProductBuy({ product }: { product: Product }) {
             </div>
           )}
 
+          {takesUploads && priced && <CustomUploads onChange={onUploads} onBusy={onUploadBusy} />}
+
           {product.personalization_prompt && priced && (
             <div className="mt-7">
               <label htmlFor="personalization" className="mb-2 block font-semibold">
@@ -225,8 +234,8 @@ export default function ProductBuy({ product }: { product: Product }) {
                   +
                 </button>
               </div>
-              <button type="button" onClick={addToBag} className="btn btn-gold flex-1 sm:flex-none sm:px-10">
-                Add to bag
+              <button type="button" onClick={addToBag} disabled={uploading} className="btn btn-gold flex-1 sm:flex-none sm:px-10">
+                {uploading ? "Uploading images…" : "Add to bag"}
               </button>
             </div>
           ) : (

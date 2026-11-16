@@ -36,8 +36,12 @@ export type CartLine = {
   size?: string;
   options?: Record<string, string>;
   personalization?: string;
+  uploads?: Upload[];
   qty: number;
 };
+
+/** A customer image stored in the private customer-uploads bucket. */
+export type Upload = { path: string; name: string };
 
 export type Customer = {
   id: string;
@@ -62,7 +66,7 @@ export type Order = {
   tax_cents: number;
   total_cents: number;
   shipping_address: { name?: string; line1?: string; line2?: string; city?: string; state?: string; postal_code?: string; country?: string } | null;
-  items: { name: string; qty: number; price_cents: number; style?: string; size?: string; slug?: string; options?: string; personalization?: string }[];
+  items: { name: string; qty: number; price_cents: number; style?: string; size?: string; slug?: string; options?: string; personalization?: string; uploads?: string[] }[];
   tracking_number: string | null;
   notes: string | null;
   created_at: string;

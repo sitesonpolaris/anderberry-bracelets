@@ -31,6 +31,7 @@
 
 ## Catalogue (14 products, Nov 2026)
 - Tap-to-Connect: 8 stones with their own prices from Jesse's Etsy screenshots (tiger eye & onyx, mixed tiger eye, blue & gold, brown tiger eye $85; black obsidian, black lava rock $80; leopard, snowflake jasper $75). Stone = `styles[].price_cents`.
+- Customer images: products with `options` show an uploader (up to 3 images, PNG/JPG/WEBP/GIF/HEIC/SVG, 10 MB each) → private bucket `customer-uploads` at `pending/<uuid>/<file>`. Anyone can only insert there; only admins can read/delete. Paths travel in the cart, are validated in `/api/checkout`, stored in Stripe product metadata and in `orders.items[].uploads`; the admin order page shows them via 1-hour signed URLs. Files removed before checkout or from abandoned carts stay as orphans in `pending/` (clean up occasionally in Supabase Storage).
 - Custom products carry `options` (Customization: Logo, Photo, Fraternity, Sorority, QR Code, Pic of Pet, Solid Color, N/A) and an optional personalization note; both travel into the cart, Stripe line description/metadata and the order.
 - Added from Etsy: Executive 3-Piece ($249.97), Executive 2-Piece ($169.98), NFC Keychain ($79.99), Heart NFC Charm ($39.99), Stylish Cigar Nub Holder ($39.99, was "Beaded Hat Pin"), Skull Head Cigar Nub Holder ($34.99), Eclipse Collection (hidden: no photo/price). Old slugs redirect.
 
