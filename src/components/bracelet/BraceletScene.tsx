@@ -149,7 +149,6 @@ function Strung({ strand, mats, reduced, yaw }: { strand: Strand; mats: Record<S
     }
     if (group.current) {
       group.current.rotation.y = y.value;
-      group.current.position.y = reduced ? 0 : Math.sin(clock.elapsedTime * 0.8) * 0.03;
     }
   });
 

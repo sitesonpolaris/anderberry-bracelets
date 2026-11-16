@@ -76,8 +76,8 @@ export default function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-label="Your bag"
-        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-bone shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
-          open ? "translate-x-0" : "translate-x-full"
+        className={`absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-bone transition-[translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+          open ? "translate-x-0 shadow-2xl" : "translate-x-full shadow-none"
         }`}
       >
         <div className="flex items-center justify-between px-6 pb-4 pt-6">
