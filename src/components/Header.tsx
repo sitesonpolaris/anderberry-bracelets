@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
 import { useCart } from "./cart/CartProvider";
 import { Wordmark } from "./Logo";
 
-const links = [
-  { href: "/shop", label: "Shop" },
-  { href: "/shop?c=tap-to-connect", label: "Tap-to-Connect" },
-  { href: "/custom", label: "Custom orders" },
-  { href: "/story", label: "Our story" },
-];
-
-export default function Header() {
+export default function Header({ featured }: { featured?: { key: string; name: string } }) {
+  // The first collection in shop order gets a spot in the main nav
+  const links = [
+    { href: "/shop", label: "Shop" },
+    ...(featured ? [{ href: `/shop?c=${featured.key}`, label: featured.name }] : []),
+    { href: "/custom", label: "Custom orders" },
+    { href: "/story", label: "Our story" },
+  ];
   const { count, setOpen } = useCart();
   const [menu, setMenu] = useState(false);
   const path = usePathname();

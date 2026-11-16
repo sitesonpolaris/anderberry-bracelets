@@ -4,17 +4,13 @@ import BraceletHero from "@/components/bracelet/BraceletHero";
 import ProductCard from "@/components/ProductCard";
 import OrgJsonLd from "@/components/OrgJsonLd";
 import VideoFacade from "@/components/VideoFacade";
-import { getProducts } from "@/lib/products";
-import { collections, site } from "@/lib/site";
+import { Badge } from "@/components/Logo";
+import { getCollections, getProducts } from "@/lib/products";
+import { site } from "@/lib/site";
 
 export const revalidate = 300;
 
-const collectionImages: Record<string, string> = {
-  "tap-to-connect": "/products/ttc-tiger-onyx-hex.webp",
-  gemstone: "/products/tiger-eye-hex.webp",
-  custom: "/products/logo-charm-agate.webp",
-  pins: "/products/hat-pin-display.webp",
-};
+const words = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
 const milestones = [
   { when: "2012", what: "Amy, Aaron and his sister move from Atlanta to Charlotte to start over." },
@@ -26,7 +22,9 @@ const milestones = [
 ];
 
 export default async function Home() {
-  const products = await getProducts();
+  const [products, collections] = await Promise.all([getProducts(), getCollections()]);
+  const [lead, ...rest] = collections;
+  const customKey = collections.find((c) => c.key === "custom")?.key;
   const featured = products.filter((p) => p.featured).slice(0, 4);
   const pbs = site.press[0];
 
@@ -55,40 +53,55 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Collections */}
-      <section aria-labelledby="collections-h" className="wrap pb-32 lg:pb-44">
-        <h2 id="collections-h" className="max-w-3xl text-[clamp(2.5rem,5.2vw,5rem)]" data-reveal>
-          Four ways to wear it
-        </h2>
-        <div className="mt-14 grid gap-5 lg:grid-cols-12">
-          <Link href="/shop?c=tap-to-connect" className="group relative block overflow-hidden rounded-[2rem] bg-onyx text-bone lg:col-span-7 lg:row-span-3" data-reveal>
-            <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[40rem]">
-              <Image src={collectionImages["tap-to-connect"]} alt="Tiger eye and matte onyx bracelet with a copper NFC coil in its hex centerpiece" fill sizes="(min-width: 1024px) 58vw, 100vw" className="img-lift object-cover" />
-              <div className="absolute inset-x-0 bottom-0 bg-onyx/80 p-6 sm:p-8">
-                <h3 className="text-[clamp(2rem,3.4vw,3.25rem)]">{collections[0].name}</h3>
-                <p className="mt-2 max-w-md text-ash">{collections[0].blurb}</p>
-              </div>
-            </div>
-          </Link>
-          {collections.slice(1).map((c, i) => (
+      {/* Collections (managed in /admin/collections) */}
+      {lead && (
+        <section aria-labelledby="collections-h" className="wrap pb-32 lg:pb-44">
+          <h2 id="collections-h" className="max-w-3xl text-[clamp(2.5rem,5.2vw,5rem)]" data-reveal>
+            {collections.length === 1 ? "One way to wear it" : collections.length <= 10 ? `${words[collections.length]} ways to wear it` : "Every way to wear it"}
+          </h2>
+          <div className="mt-14 grid gap-5 lg:grid-cols-12">
             <Link
-              key={c.key}
-              href={`/shop?c=${c.key}`}
-              className="group grid grid-cols-[7.5rem_1fr] items-center gap-5 rounded-[2rem] bg-bone-2 p-3 pr-6 transition-colors hover:bg-bone-3 sm:grid-cols-[10rem_1fr] lg:col-span-5"
+              href={`/shop?c=${lead.key}`}
+              className={`group relative block overflow-hidden rounded-[2rem] bg-onyx text-bone ${rest.length ? "lg:col-span-7" : "lg:col-span-12"}`}
+              style={rest.length ? { gridRow: `span ${rest.length} / span ${rest.length}` } : undefined}
               data-reveal
-              style={{ ["--i" as string]: i + 1 }}
             >
-              <div className="relative aspect-square overflow-hidden rounded-[1.5rem]">
-                <Image src={collectionImages[c.key]} alt="" fill sizes="160px" className="img-lift object-cover" />
-              </div>
-              <div>
-                <h3 className="text-[2rem]">{c.name}</h3>
-                <p className="mt-1 text-[0.98rem]">{c.blurb}</p>
+              <div className="relative aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[40rem]">
+                {lead.image ? (
+                  <Image src={lead.image} alt={`${lead.name} collection`} fill sizes="(min-width: 1024px) 58vw, 100vw" className="img-lift object-cover" />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center pb-24"><Badge className="h-40 w-40 opacity-80" title="" /></div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-onyx/80 p-6 sm:p-8">
+                  <h3 className="text-[clamp(2rem,3.4vw,3.25rem)]">{lead.name}</h3>
+                  {lead.blurb && <p className="mt-2 max-w-md text-ash">{lead.blurb}</p>}
+                </div>
               </div>
             </Link>
-          ))}
-        </div>
-      </section>
+            {rest.map((c, i) => (
+              <Link
+                key={c.key}
+                href={`/shop?c=${c.key}`}
+                className="group grid grid-cols-[7.5rem_1fr] items-center gap-5 rounded-[2rem] bg-bone-2 p-3 pr-6 transition-colors hover:bg-bone-3 sm:grid-cols-[10rem_1fr] lg:col-span-5"
+                data-reveal
+                style={{ ["--i" as string]: Math.min(i + 1, 4) }}
+              >
+                <div className="relative aspect-square overflow-hidden rounded-[1.5rem] bg-onyx">
+                  {c.image ? (
+                    <Image src={c.image} alt="" fill sizes="160px" className="img-lift object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 grid place-items-center text-bone"><Badge className="h-16 w-16 opacity-80" title="" /></div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-[2rem]">{c.name}</h3>
+                  {c.blurb && <p className="mt-1 text-[0.98rem]">{c.blurb}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured */}
       <section aria-labelledby="featured-h" className="wrap pb-32 lg:pb-44">
@@ -192,7 +205,7 @@ export default async function Home() {
               <Link href="/custom" className="btn btn-ink">
                 Get a bulk quote
               </Link>
-              <Link href="/shop?c=custom" className="link font-medium">
+              <Link href={customKey ? `/shop?c=${customKey}` : "/shop"} className="link font-medium">
                 See logo pieces
               </Link>
             </div>

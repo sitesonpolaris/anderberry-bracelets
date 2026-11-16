@@ -23,6 +23,8 @@ export type Product = {
   owner_to_confirm: string | null;
   options: ProductOption[];
   personalization_prompt: string | null;
+  /** Every collection the product belongs to (from product_collections). `collection` is the main one. */
+  collections: string[];
 };
 
 export type CartLine = {

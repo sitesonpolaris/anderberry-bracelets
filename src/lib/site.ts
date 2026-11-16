@@ -47,13 +47,17 @@ export const site = {
   },
 } as const;
 
-export type Collection = "tap-to-connect" | "gemstone" | "custom" | "pins";
+/** A collection key, e.g. "tap-to-connect". Collections live in the Supabase `collections` table. */
+export type Collection = string;
 
-export const collections: { key: Collection; name: string; blurb: string }[] = [
-  { key: "tap-to-connect", name: "Tap-to-Connect", blurb: "Stone bracelets with an NFC chip set in the centerpiece. One tap shares your link." },
-  { key: "gemstone", name: "Gemstone", blurb: "Onyx, tiger eye, hematite and agate, strung by hand for everyday wear." },
-  { key: "custom", name: "Custom logo", blurb: "Your organization’s logo sealed into a charm on bracelets, keychains and pins." },
-  { key: "pins", name: "Pins & cigar pokers", blurb: "Logo lapel pins, NFC optional, and beaded cigar nub holders." },
+export type CollectionRow = { key: string; name: string; blurb: string; image: string | null; sort: number; active: boolean };
+
+/** Build-time fallback only (used if Supabase is unreachable). Edit collections in /admin/collections. */
+export const fallbackCollections: CollectionRow[] = [
+  { key: "tap-to-connect", name: "Tap-to-Connect", blurb: "Stone bracelets with an NFC chip set in the centerpiece. One tap shares your link.", image: "/products/ttc-tiger-onyx-hex.webp", sort: 10, active: true },
+  { key: "gemstone", name: "Gemstone", blurb: "Onyx, tiger eye, hematite and agate, strung by hand for everyday wear.", image: "/products/tiger-eye-hex.webp", sort: 20, active: true },
+  { key: "custom", name: "Custom logo", blurb: "Your organization’s logo sealed into a charm on bracelets, keychains and pins.", image: "/products/logo-charm-agate.webp", sort: 30, active: true },
+  { key: "pins", name: "Pins & cigar pokers", blurb: "Logo lapel pins, NFC optional, and beaded cigar nub holders.", image: "/products/hat-pin-display.webp", sort: 40, active: true },
 ];
 
 export const wristSizes = [

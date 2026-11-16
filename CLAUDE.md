@@ -2,7 +2,7 @@
 
 - **Live:** https://anderberry-bracelets.netlify.app (Netlify team `sitesonpolaris`, site id `abcf06ea-799a-414b-8900-d30b3e3e07df`)
 - **Repo:** sitesonpolaris/anderberry-bracelets (must be private)
-- **Supabase:** project `imbucqirmqanisonvybs` ("Anderberry Bracelets", us-west-2). Schema in `supabase/migrations/0001_init.sql`, product seed in `supabase/seed.sql`.
+- **Supabase:** project `imbucqirmqanisonvybs` ("Anderberry Bracelets", us-west-2). Schema in `supabase/migrations/` (0001 init … 0004 collections), product seed in `supabase/seed.sql`.
 - **Stack:** Next.js 16.4 (App Router, `cacheComponents` off → ISR + `revalidatePath`), Tailwind v4 tokens in `src/app/globals.css`, React Three Fiber hero, Supabase (`@supabase/ssr`), Stripe Checkout.
 
 ## Business
@@ -18,9 +18,10 @@
 - Motif / idea: the three beads on the logo's circle become the strand the visitor turns in their hand. Hero = procedural 3D bracelet (`src/components/bracelet/`) with 4 presets mirroring real pieces; swatches restring it live and link to the piece. Story told as a bead strand.
 
 ## How it works
+- Collections: `collections` table (key, name, blurb, image, sort, active), managed in /admin/collections. Membership is many-to-many via `product_collections`; `products.collection` is the product's *main* collection (breadcrumb + "More …" related items), a foreign key to `collections.key` (on update cascade, on delete restrict). The first active collection by `sort` gets the big home-page tile and a spot in the main menu. Shop tabs, footer, home section and sitemap all read the table; `fallbackCollections` in `src/lib/site.ts` is only the build-time fallback. Renaming a key cascades in the DB but breaks old `/shop?c=` links (they fall back to "Every piece").
 - Catalogue: `products` table (public read of active rows). `price_cents = null` → "Ask for price" → `/custom?product=` request form. Build falls back to `src/lib/seed.ts` if Supabase is unreachable.
 - Checkout: `/api/checkout` re-prices from the DB, Stripe Checkout (US shipping, flat rate / free over threshold in `site.shipping`). Webhook `/api/stripe/webhook` upserts `customers` and `orders` (needs `SUPABASE_SECRET_KEY`).
-- Admin: `/admin` (Supabase auth, email+password or magic link). Access = row in `public.admins`. Screens: overview, orders (status/tracking/notes), products (edit, image upload to `product-images` bucket, styles), customers (notes/tags, CSV export), requests.
+- Admin: `/admin` (Supabase auth, email+password or magic link). Access = row in `public.admins`. Screens: overview, orders (status/tracking/notes), products (edit, image upload to `product-images` bucket, styles, collections checkboxes + main collection), collections, customers (notes/tags, CSV export), requests.
 - To add an admin: create the user in Supabase → Authentication → Users, then
   `insert into public.admins (user_id) select id from auth.users where email = '<email>';`
 

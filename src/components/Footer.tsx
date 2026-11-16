@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { collections, site } from "@/lib/site";
+import { site, type CollectionRow } from "@/lib/site";
 import { Badge } from "./Logo";
 import { CurrentYear } from "./CurrentYear";
 
-export default function Footer() {
+export default function Footer({ collections }: { collections: CollectionRow[] }) {
   return (
     <footer className="bg-onyx text-bone">
       <div className="wrap grid gap-14 pb-10 pt-24 lg:grid-cols-12">

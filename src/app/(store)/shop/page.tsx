@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { getProducts } from "@/lib/products";
-import { collections, type Collection } from "@/lib/site";
+import { getCollections, getProducts } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Shop bracelets, Tap-to-Connect and logo pieces",
@@ -12,14 +11,14 @@ export const metadata: Metadata = {
 
 export default async function Shop({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c } = await searchParams;
-  const current = collections.find((x) => x.key === c)?.key as Collection | undefined;
-  const products = await getProducts(current);
-  const heading = current ? collections.find((x) => x.key === current)!.name : "Every piece";
-  const blurb = current
-    ? collections.find((x) => x.key === current)!.blurb
-    : "Each bracelet is strung by hand in Charlotte and sized to your wrist.";
+  const collections = await getCollections();
+  const active = collections.find((x) => x.key === c);
+  const products = await getProducts(active?.key);
+  const current = active?.key;
+  const heading = active ? active.name : "Every piece";
+  const blurb = active?.blurb || "Each bracelet is strung by hand in Charlotte and sized to your wrist.";
 
-  const tabs = [{ key: undefined, name: "All" }, ...collections];
+  const tabs: { key: string | undefined; name: string }[] = [{ key: undefined, name: "All" }, ...collections];
 
   return (
     <div className="wrap pb-32 pt-10 lg:pb-44 lg:pt-16">

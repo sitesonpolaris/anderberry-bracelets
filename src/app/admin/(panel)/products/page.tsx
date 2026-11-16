@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Empty, PageHead, Panel } from "@/components/admin/ui";
 import { money } from "@/lib/format";
-import { collections } from "@/lib/site";
+import { normalize } from "@/lib/products";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { Product } from "@/lib/types";
 
@@ -10,9 +10,13 @@ export const metadata = { title: "Products" };
 
 export default async function Products() {
   const sb = await supabaseServer();
-  const { data } = await sb.from("products").select("*").order("sort").order("name");
-  const products = (data ?? []) as Product[];
-  const cname = (k: string) => collections.find((c) => c.key === k)?.name ?? k;
+  const [{ data }, { data: cols }] = await Promise.all([
+    sb.from("products").select("*, product_collections(collection_key)").order("sort").order("name"),
+    sb.from("collections").select("key,name,sort").order("sort"),
+  ]);
+  const products = (data ?? []).map(normalize) as Product[];
+  const order = new Map((cols ?? []).map((c, i) => [c.key as string, i]));
+  const cname = (k: string) => (cols ?? []).find((c) => c.key === k)?.name ?? k;
 
   return (
     <>
@@ -24,7 +28,7 @@ export default async function Products() {
           <div className="-mx-2 overflow-x-auto">
             <table className="w-full min-w-[42rem] text-left">
               <thead className="text-sm text-hematite">
-                <tr><th className="px-2 py-2 font-medium">Product</th><th className="px-2 font-medium">Collection</th><th className="px-2 font-medium">Price</th><th className="px-2 font-medium">In shop</th><th className="px-2 font-medium">Owner to confirm</th></tr>
+                <tr><th className="px-2 py-2 font-medium">Product</th><th className="px-2 font-medium">Collections</th><th className="px-2 font-medium">Price</th><th className="px-2 font-medium">In shop</th><th className="px-2 font-medium">Owner to confirm</th></tr>
               </thead>
               <tbody>
                 {products.map((p) => (
@@ -37,7 +41,16 @@ export default async function Products() {
                         {p.name}
                       </Link>
                     </td>
-                    <td className="px-2">{cname(p.collection)}</td>
+                    <td className="px-2">
+                      {[...p.collections]
+                        .sort((a, b) => (order.get(a) ?? 99) - (order.get(b) ?? 99))
+                        .map((k, i) => (
+                          <span key={k}>
+                            {i > 0 && ", "}
+                            <span className={k === p.collection ? "font-semibold" : ""}>{cname(k)}</span>
+                          </span>
+                        ))}
+                    </td>
                     <td className={`tabular px-2 ${p.price_cents == null ? "text-oxblood" : ""}`}>{money(p.price_cents)}</td>
                     <td className="px-2">{p.active ? "Yes" : "Hidden"}</td>
                     <td className="max-w-xs px-2 text-sm text-hematite">{p.owner_to_confirm ?? "—"}</td>

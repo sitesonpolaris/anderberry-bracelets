@@ -3,9 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductBuy from "@/components/ProductBuy";
 import ProductCard from "@/components/ProductCard";
-import { getProduct, getProducts } from "@/lib/products";
+import { getCollections, getProduct, getProducts } from "@/lib/products";
 import { priceRange } from "@/lib/pricing";
-import { collections, site } from "@/lib/site";
+import { site } from "@/lib/site";
 
 export const revalidate = 300;
 
@@ -30,8 +30,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) notFound();
-  const related = (await getProducts(product.collection)).filter((p) => p.slug !== product.slug).slice(0, 4);
-  const collection = collections.find((c) => c.key === product.collection);
+  const collections = await getCollections();
+  // Breadcrumb and related items follow the main collection, else the first active one it belongs to
+  const collection =
+    collections.find((c) => c.key === product.collection) ?? collections.find((c) => product.collections.includes(c.key));
+  const related = collection ? (await getProducts(collection.key)).filter((p) => p.slug !== product.slug).slice(0, 4) : [];
 
   const range = priceRange(product);
   const jsonLd = {

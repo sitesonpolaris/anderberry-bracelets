@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { revalidateStore } from "@/app/admin/actions";
-import { collections, type Collection } from "@/lib/site";
+import type { CollectionRow } from "@/lib/site";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import type { Product, ProductStyle } from "@/lib/types";
 import { Panel } from "./ui";
@@ -15,7 +15,7 @@ const slugify = (s: string) =>
 const blank: Omit<Product, "id"> = {
   slug: "",
   name: "",
-  collection: "gemstone",
+  collection: "",
   tagline: "",
   description: "",
   price_cents: null,
@@ -31,9 +31,10 @@ const blank: Omit<Product, "id"> = {
   owner_to_confirm: null,
   options: [],
   personalization_prompt: null,
+  collections: [],
 };
 
-export default function ProductEditor({ product }: { product: Product | null }) {
+export default function ProductEditor({ product, collections }: { product: Product | null; collections: CollectionRow[] }) {
   const router = useRouter();
   const [p, setP] = useState<Omit<Product, "id">>(product ?? blank);
   const [price, setPrice] = useState(product?.price_cents != null ? (product.price_cents / 100).toFixed(2) : "");
@@ -41,6 +42,13 @@ export default function ProductEditor({ product }: { product: Product | null }) 
   const [stylePrices, setStylePrices] = useState<string[]>((product?.styles ?? []).map((s) => (s.price_cents != null ? (s.price_cents / 100).toFixed(2) : "")));
   const [optionValues, setOptionValues] = useState<string[]>((product?.options ?? []).map((o) => o.values.join(", ")));
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
+  const [members, setMembers] = useState<string[]>(product?.collections ?? []);
+  const toggleMember = (key: string, on: boolean) => {
+    const next = on ? [...members, key] : members.filter((k) => k !== key);
+    setMembers(next);
+    // Keep the main collection valid: default it to the first checked one
+    if (!next.includes(p.collection)) set("collection", next[0] ?? "");
+  };
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -96,8 +104,14 @@ export default function ProductEditor({ product }: { product: Product | null }) 
       setMsg({ ok: false, text: "Add a name first." });
       return;
     }
+    if (!members.length || !members.includes(p.collection)) {
+      setMsg({ ok: false, text: "Tick at least one collection and choose its main collection." });
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { collections: _members, product_collections: _pc, ...fields } = p as typeof p & { product_collections?: unknown };
     const row = {
-      ...p,
+      ...fields,
       slug,
       price_cents: cents,
       stones: stones.split(",").map((s) => s.trim()).filter(Boolean),
@@ -115,9 +129,23 @@ export default function ProductEditor({ product }: { product: Product | null }) 
     const res = product
       ? await sb.from("products").update(row).eq("id", product.id).select("id").single()
       : await sb.from("products").insert(row).select("id").single();
-    setBusy(false);
     if (res.error) {
+      setBusy(false);
       setMsg({ ok: false, text: res.error.code === "23505" ? "Another product already uses that web address." : "Couldn’t save. Try again." });
+      return;
+    }
+    // Bring product_collections in line with the ticked boxes
+    const id = res.data.id as string;
+    const before = product?.collections ?? [];
+    const remove = before.filter((k) => !members.includes(k));
+    const add = members.filter((k) => !before.includes(k));
+    const [del, ins] = await Promise.all([
+      remove.length ? sb.from("product_collections").delete().eq("product_id", id).in("collection_key", remove) : Promise.resolve({ error: null }),
+      add.length ? sb.from("product_collections").upsert(add.map((k) => ({ product_id: id, collection_key: k })), { ignoreDuplicates: true }) : Promise.resolve({ error: null }),
+    ]);
+    setBusy(false);
+    if (del.error || ins.error) {
+      setMsg({ ok: false, text: "The product saved, but its collections didn’t. Save again." });
       return;
     }
     await revalidateStore(slug).catch(() => {});
@@ -242,12 +270,30 @@ export default function ProductEditor({ product }: { product: Product | null }) 
               <label htmlFor="pp" className="mb-1.5 block font-semibold">Price (USD)</label>
               <input id="pp" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Leave empty for “Ask for price”" className="field tabular" />
             </div>
-            <div>
-              <label htmlFor="pc" className="mb-1.5 block font-semibold">Collection</label>
-              <select id="pc" value={p.collection} onChange={(e) => set("collection", e.target.value as Collection)} className="field">
-                {collections.map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}
-              </select>
-            </div>
+            <fieldset>
+              <legend className="mb-2 font-semibold">Collections</legend>
+              <div className="grid gap-2">
+                {collections.map((c) => (
+                  <label key={c.key} className="flex cursor-pointer items-center gap-3">
+                    <input type="checkbox" checked={members.includes(c.key)} onChange={(e) => toggleMember(c.key, e.target.checked)} className="h-5 w-5 accent-[#0e0d0c]" />
+                    <span>
+                      {c.name}
+                      {!c.active && <span className="text-hematite"> (hidden)</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1 text-sm text-hematite">A product can be in as many collections as you like.</p>
+            </fieldset>
+            {members.length > 1 && (
+              <div>
+                <label htmlFor="pc" className="mb-1.5 block font-semibold">Main collection</label>
+                <select id="pc" value={p.collection} onChange={(e) => set("collection", e.target.value)} className="field">
+                  {collections.filter((c) => members.includes(c.key)).map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}
+                </select>
+                <p className="mt-1 text-sm text-hematite">Used for the breadcrumb and “More …” on the product page.</p>
+              </div>
+            )}
             <div>
               <label htmlFor="po" className="mb-1.5 block font-semibold">Order in shop</label>
               <input id="po" type="number" value={p.sort} onChange={(e) => set("sort", Number(e.target.value) || 100)} className="field" />

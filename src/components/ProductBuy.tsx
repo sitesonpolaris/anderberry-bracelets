@@ -115,7 +115,7 @@ export default function ProductBuy({ product }: { product: Product }) {
           {product.styles.length > 0 && (
             <fieldset className="mt-8">
               <legend className="mb-3 font-semibold">
-                {product.is_nfc && product.collection === "tap-to-connect" ? "Stone" : "Style"}: <span className="font-normal">{styleObj?.name}</span>
+                {product.stones.length > 0 && product.styles.some((s) => s.price_cents != null) ? "Stone" : "Style"}: <span className="font-normal">{styleObj?.name}</span>
               </legend>
               <div className="flex flex-wrap gap-2">
                 {product.styles.map((s) => (

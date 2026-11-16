@@ -4,7 +4,7 @@ import type { Product } from "./types";
 // Tap-to-Connect stone prices and the custom options come from Etsy screenshots Jesse supplied (Nov 2026).
 // Other prices come from Etsy search snippets and are flagged in owner_to_confirm. null price = "Ask for price".
 // Used as the build-time fallback and as the source for the Supabase seed.
-type Seed = Omit<Product, "id" | "active" | "inventory" | "sort" | "options" | "personalization_prompt" | "styles"> &
+type Seed = Omit<Product, "id" | "active" | "inventory" | "sort" | "options" | "personalization_prompt" | "styles" | "collections"> &
   Partial<Pick<Product, "active" | "options" | "personalization_prompt" | "styles">> & { sort: number };
 
 const p = (x: Seed): Product => ({
@@ -14,6 +14,7 @@ const p = (x: Seed): Product => ({
   options: [],
   personalization_prompt: null,
   styles: [],
+  collections: [x.collection],
   ...x,
 });
 
