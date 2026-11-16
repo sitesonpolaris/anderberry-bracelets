@@ -10,6 +10,7 @@ import type { Product, Upload } from "@/lib/types";
 import { useCart } from "./cart/CartProvider";
 import CustomUploads from "./CustomUploads";
 import NoPhoto from "./NoPhoto";
+import RichText from "./RichText";
 
 export default function ProductBuy({ product }: { product: Product }) {
   const [style, setStyle] = useState<string | undefined>(product.styles[0]?.key);
@@ -72,8 +73,8 @@ export default function ProductBuy({ product }: { product: Product }) {
   return (
     <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
       {/* Gallery */}
-      <div className="lg:col-span-7">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-bone-2">
+      <div className="min-w-0 lg:col-span-7">
+        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[2rem] bg-bone-2 lg:aspect-auto lg:h-[min(calc(100dvh-11rem),46rem)]">
           {main ? (
             <Image key={main} src={main} alt={`${product.name}${styleObj ? `, ${styleObj.name}` : ""}`} fill priority sizes="(min-width: 1024px) 58vw, 100vw" className="object-cover" />
           ) : (
@@ -86,7 +87,7 @@ export default function ProductBuy({ product }: { product: Product }) {
           </p>
         )}
         {gallery.length > 1 && (
-          <div className="scrollbar-none mt-4 flex gap-3 overflow-x-auto">
+          <div className="scrollbar-none mt-4 flex max-w-full gap-3 overflow-x-auto pb-1">
             {gallery.map((src, i) => (
               <button
                 key={src}
@@ -104,13 +105,19 @@ export default function ProductBuy({ product }: { product: Product }) {
       </div>
 
       {/* Buy box */}
-      <div className="lg:col-span-5">
+      <div className="min-w-0 lg:col-span-5">
         <div className="lg:sticky lg:top-24">
-          <h1 className="text-[clamp(2.5rem,4.4vw,4rem)]">{product.name}</h1>
+          <h1
+            className={`[overflow-wrap:anywhere] ${
+              product.name.length > 60 ? "text-[clamp(1.9rem,2.7vw,2.6rem)]" : product.name.length > 32 ? "text-[clamp(2.1rem,3.3vw,3.2rem)]" : "text-[clamp(2.25rem,4.4vw,4rem)]"
+            }`}
+          >
+            {product.name}
+          </h1>
           <p className={`tabular mt-4 text-[1.6rem] ${priced ? "" : "text-hematite"}`} aria-live="polite">
             {money(price)}
           </p>
-          <p className="mt-5 text-[1.1rem] leading-relaxed">{product.description}</p>
+          <RichText text={product.description} className="mt-5 text-[1.1rem] leading-relaxed" />
 
           {product.styles.length > 0 && (
             <fieldset className="mt-8">
