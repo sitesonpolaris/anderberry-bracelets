@@ -14,10 +14,20 @@ function label(href: string) {
   }
 }
 
-export default function RichText({ text, className = "" }: { text: string; className?: string }) {
+export default function RichText({
+  text,
+  className = "",
+  id,
+  ref,
+}: {
+  text: string;
+  className?: string;
+  id?: string;
+  ref?: React.Ref<HTMLParagraphElement>;
+}) {
   const parts = text.split(URL_RE);
   return (
-    <p className={`whitespace-pre-line [overflow-wrap:anywhere] ${className}`}>
+    <p ref={ref} id={id} className={`whitespace-pre-line [overflow-wrap:anywhere] ${className}`}>
       {parts.map((part, i) =>
         i % 2 === 1 ? (
           <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="link font-medium">

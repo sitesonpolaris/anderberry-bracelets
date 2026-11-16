@@ -10,7 +10,7 @@ import type { Product, Upload } from "@/lib/types";
 import { useCart } from "./cart/CartProvider";
 import CustomUploads from "./CustomUploads";
 import NoPhoto from "./NoPhoto";
-import RichText from "./RichText";
+import ProductDescription from "./ProductDescription";
 
 export default function ProductBuy({ product }: { product: Product }) {
   const [style, setStyle] = useState<string | undefined>(product.styles[0]?.key);
@@ -117,7 +117,7 @@ export default function ProductBuy({ product }: { product: Product }) {
           <p className={`tabular mt-4 text-[1.6rem] ${priced ? "" : "text-hematite"}`} aria-live="polite">
             {money(price)}
           </p>
-          <RichText text={product.description} className="mt-5 text-[1.1rem] leading-relaxed" />
+          {product.tagline && <p className="mt-3 text-[1.1rem] leading-relaxed text-hematite">{product.tagline}</p>}
 
           {product.styles.length > 0 && (
             <fieldset className="mt-8">
@@ -253,6 +253,8 @@ export default function ProductBuy({ product }: { product: Product }) {
               <p className="mt-3 text-sm text-hematite">Made to order. Tell us your size and quantity and we’ll reply with a price.</p>
             </div>
           )}
+
+          <ProductDescription text={product.description} />
 
           <dl className="mt-10 grid gap-5 rounded-[1.5rem] bg-bone-2 p-6">
             {product.stones.length > 0 && (
